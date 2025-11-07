@@ -8,12 +8,26 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Gestion du catalogue de films</h5>
-                    <a href="#" class="btn btn-primary btn-sm">
+                    <a href="{{ route('films.create') }}" class="btn btn-primary btn-sm">
                         <i class="bi bi-plus-circle"></i> Ajouter un film
                     </a>
                 </div>
 
                 <div class="card-body">
+                    @if (session('success'))
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="bi bi-check-circle"></i> {{ session('success') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    @endif
+
+                    @if (session('error'))
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="bi bi-exclamation-circle"></i> {{ session('error') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    @endif
+
                     @if (empty($films))
                         <div class="alert alert-warning">
                             <i class="bi bi-exclamation-triangle"></i>
@@ -49,18 +63,25 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                <div class="btn-group" role="group">
-                                                    <a href="{{ route('films.show', $film['filmId'] ?? $film['id']) }}" 
-                                                       class="btn btn-sm btn-info" title="Voir">
-                                                        <i class="bi bi-eye"></i>
+                                                <div class="d-flex gap-2">
+                                                    <a href="{{ route('films.show', $film['filmId'] ?? $film['id']) }}"
+                                                       class="btn btn-info btn-sm" title="Voir les détails">
+                                                        <i class="bi bi-eye"></i> Voir
                                                     </a>
-                                                    <a href="#" class="btn btn-sm btn-warning" title="Modifier">
-                                                        <i class="bi bi-pencil"></i>
+                                                    <a href="{{ route('films.edit', $film['filmId'] ?? $film['id']) }}"
+                                                       class="btn btn-warning btn-sm text-white" title="Modifier le film">
+                                                        <i class="bi bi-pencil"></i> Modifier
                                                     </a>
-                                                    <button class="btn btn-sm btn-danger" title="Supprimer"
-                                                            onclick="return confirm('Êtes-vous sûr ?')">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
+                                                    <form action="{{ route('films.destroy', $film['filmId'] ?? $film['id']) }}"
+                                                          method="POST"
+                                                          style="display: inline;"
+                                                          onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce film ?')">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-danger btn-sm" title="Supprimer le film">
+                                                            <i class="bi bi-trash"></i> Supprimer
+                                                        </button>
+                                                    </form>
                                                 </div>
                                             </td>
                                         </tr>

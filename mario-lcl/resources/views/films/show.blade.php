@@ -49,6 +49,28 @@
                         <dt class="col-sm-3">Caractéristiques spéciales</dt>
                         <dd class="col-sm-9">{{ $film['specialFeatures'] ?? 'Aucune' }}</dd>
 
+                        <dt class="col-sm-3">Acteurs</dt>
+                        <dd class="col-sm-9">
+                            @if(isset($film['actors']) && count($film['actors']) > 0)
+                                @foreach($film['actors'] as $actor)
+                                    <span class="badge bg-primary me-1">{{ $actor['firstName'] ?? '' }} {{ $actor['lastName'] ?? '' }}</span>
+                                @endforeach
+                            @else
+                                <span class="text-muted">Aucun acteur</span>
+                            @endif
+                        </dd>
+
+                        <dt class="col-sm-3">Réalisateurs</dt>
+                        <dd class="col-sm-9">
+                            @if(isset($film['directors']) && count($film['directors']) > 0)
+                                @foreach($film['directors'] as $director)
+                                    <span class="badge bg-success me-1">{{ $director['firstName'] ?? '' }} {{ $director['lastName'] ?? '' }}</span>
+                                @endforeach
+                            @else
+                                <span class="text-muted">Aucun réalisateur</span>
+                            @endif
+                        </dd>
+
                         <dt class="col-sm-3">Dernière mise à jour</dt>
                         <dd class="col-sm-9">{{ $film['lastUpdate'] ?? 'N/A' }}</dd>
                     </dl>
@@ -56,12 +78,19 @@
                     <hr>
 
                     <div class="d-flex gap-2">
-                        <a href="#" class="btn btn-warning">
+                        <a href="{{ route('films.edit', $film['filmId'] ?? $film['id']) }}" class="btn btn-warning text-white">
                             <i class="bi bi-pencil"></i> Modifier
                         </a>
-                        <button class="btn btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce film ?')">
-                            <i class="bi bi-trash"></i> Supprimer
-                        </button>
+                        <form action="{{ route('films.destroy', $film['filmId'] ?? $film['id']) }}"
+                              method="POST"
+                              style="display: inline;"
+                              onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce film ?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> Supprimer
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
