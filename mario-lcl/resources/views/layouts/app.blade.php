@@ -41,6 +41,11 @@
                                     Gestion du catalogue de films
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('inventory.*') ? 'active' : '' }}" href="{{ route('inventory.index') }}">
+                                    Gestion de Stock
+                                </a>
+                            </li>
                         @endauth
                     </ul>
 
