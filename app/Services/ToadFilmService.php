@@ -15,13 +15,13 @@ class ToadFilmService
         $this->baseUrl = rtrim((string) config('services.toad.url', 'http://localhost:8180'), '/');
     }
 
-    public function getAllFilms(): ?array
+    public function getAllFilms(int $limit = 10, int $offset = 0): ?array
     {
-        $url = $this->baseUrl . '/films';
+        $url = $this->baseUrl . '/films?' . http_build_query(['limit' => $limit, 'offset' => $offset]);
 
         try {
             $headers = ['Accept' => 'application/json'];
-            
+
             // Récupère le token JWT depuis la session
             $token = $this->getUserToken();
             if ($token) {
@@ -43,6 +43,32 @@ class ToadFilmService
         } catch (\Throwable $e) {
             Log::error('Erreur API Films', ['msg' => $e->getMessage()]);
             return null;
+        }
+    }
+
+    public function getFilmsCount(): int
+    {
+        $url = $this->baseUrl . '/films/count';
+
+        try {
+            $headers = ['Accept' => 'application/json'];
+            $token = $this->getUserToken();
+            if ($token) {
+                $headers['Authorization'] = "Bearer {$token}";
+            }
+
+            $response = Http::withHeaders($headers)
+                ->timeout(10)
+                ->get($url);
+
+            if ($response->successful()) {
+                return (int) $response->body();
+            }
+
+            return 0;
+        } catch (\Throwable $e) {
+            Log::error('Erreur API Films Count', ['msg' => $e->getMessage()]);
+            return 0;
         }
     }
 

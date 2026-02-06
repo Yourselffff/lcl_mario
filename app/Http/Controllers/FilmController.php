@@ -17,10 +17,32 @@ class FilmController extends Controller
 
     public function index()
     {
-        $films = $this->filmService->getAllFilms();
-
         return view('films.index', [
-            'films' => $films ?? []
+            'allowedLimits' => [10, 20, 50],
+        ]);
+    }
+
+    public function getData(Request $request)
+    {
+        $allowedLimits = [10, 20, 50];
+        $limit = (int) $request->input('limit', 10);
+        if (!in_array($limit, $allowedLimits)) {
+            $limit = 10;
+        }
+
+        $page = max(1, (int) $request->input('page', 1));
+        $offset = ($page - 1) * $limit;
+
+        $totalFilms = $this->filmService->getFilmsCount();
+        $totalPages = (int) ceil($totalFilms / $limit);
+        $films = $this->filmService->getAllFilms($limit, $offset);
+
+        return response()->json([
+            'films' => $films ?? [],
+            'currentPage' => $page,
+            'limit' => $limit,
+            'totalFilms' => $totalFilms,
+            'totalPages' => $totalPages,
         ]);
     }
 

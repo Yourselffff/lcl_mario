@@ -19,7 +19,7 @@ class InventoryController extends Controller
     {
         $inventories = $this->inventoryService->getAllInventories();
 
-        // Stocker les inventaires en cache pour 5 minutes pour Ã©viter de refaire l'appel API
+        // Stocker les inventaires en cache pour 5 minutes pour éviter de refaire l'appel API
         if ($inventories) {
             Cache::put('all_inventories', $inventories, 300);
         }
@@ -47,14 +47,14 @@ class InventoryController extends Controller
                 $groupedInventories[$filmId]['totalCopies']++;
                 $groupedInventories[$filmId]['inventoryIds'][] = $inventory['inventoryId'];
 
-                // Ajouter les dÃ©tails de chaque inventaire (sans vÃ©rifier la disponibilitÃ© pour l'instant)
+                // Ajouter les détails de chaque inventaire (sans érifier la disponibilité pour l'instant)
                 $groupedInventories[$filmId]['inventoryDetails'][] = [
                     'inventoryId' => $inventory['inventoryId'],
                     'storeId' => $inventory['storeId'],
                     'lastUpdate' => $inventory['lastUpdate'] ?? null
                 ];
 
-                // Ajouter le store_id s'il n'est pas dÃ©jÃ  dans la liste
+                // Ajouter le store_id s'il n'est pas déjÃ  dans la liste
                 $storeId = $inventory['storeId'];
                 if (!in_array($storeId, $groupedInventories[$filmId]['stores'])) {
                     $groupedInventories[$filmId]['stores'][] = $storeId;
@@ -72,7 +72,7 @@ class InventoryController extends Controller
         $films = $this->inventoryService->getAllFilms();
         $stores = $this->inventoryService->getAllStores();
 
-        // RÃ©cupÃ©rer le filmId depuis la requÃªte (si fourni)
+        // Récupérer le filmId depuis la requÃªte (si fourni)
         $preselectedFilmId = $request->query('filmId');
 
         return view('inventory.create', [
@@ -95,21 +95,21 @@ class InventoryController extends Controller
         ]);
 
         if ($result) {
-            // Invalider le cache aprÃ¨s crÃ©ation
+            // Invalider le cache aprÃ¨s création
             Cache::forget('all_inventories');
 
             // Si on a un filmId, rediriger vers la page du film
             if ($request->has('filmId')) {
                 return redirect()->route('inventory.film.show', $validated['filmId'])
-                    ->with('success', 'Le DVD a Ã©tÃ© crÃ©Ã© avec succÃ¨s');
+                    ->with('success', 'Le DVD a été créé avec succÃ¨s');
             }
 
             return redirect()->route('inventory.index')
-                ->with('success', 'Le DVD a Ã©tÃ© crÃ©Ã© avec succÃ¨s');
+                ->with('success', 'Le DVD a été créé avec succÃ¨s');
         }
 
         return redirect()->route('inventory.index')
-            ->with('error', 'Erreur lors de la crÃ©ation du DVD');
+            ->with('error', 'Erreur lors de la création du DVD');
     }
 
     public function edit($id)
@@ -118,7 +118,7 @@ class InventoryController extends Controller
 
         if (!$inventory) {
             return redirect()->route('inventory.index')
-                ->with('error', 'Inventaire non trouvÃ©');
+                ->with('error', 'Inventaire non trouvé');
         }
 
         $stores = $this->inventoryService->getAllStores();
@@ -162,11 +162,11 @@ class InventoryController extends Controller
             ->with('error', 'Erreur lors de la modification du lieu de stockage');
     }
     /**
-     * Affiche tous les DVDs d'un film spÃ©cifique
+     * Affiche tous les DVDs d'un film spécifique
      */
     public function showFilmInventories($filmId)
     {
-        // Essayer de rÃ©cupÃ©rer depuis le cache d'abord
+        // Essayer de récupérer depuis le cache d'abord
         $inventories = Cache::get('all_inventories');
 
         // Si pas en cache, faire l'appel API
@@ -180,7 +180,7 @@ class InventoryController extends Controller
 
         if (!$inventories) {
             return redirect()->route('inventory.index')
-                ->with('error', 'Erreur lors de la rÃ©cupÃ©ration des donnÃ©es');
+                ->with('error', 'Erreur lors de la récupération des données');
         }
 
         // Filtrer les inventaires pour ce film
@@ -190,10 +190,10 @@ class InventoryController extends Controller
 
         if (empty($filmInventories)) {
             return redirect()->route('inventory.index')
-                ->with('error', 'Aucun DVD trouvÃ© pour ce film');
+                ->with('error', 'Aucun DVD trouvé pour ce film');
         }
 
-        // RÃ©cupÃ©rer les infos du film depuis le premier inventaire
+        // Récupérer les infos du film depuis le premier inventaire
         $firstInventory = reset($filmInventories);
         $filmInfo = [
             'filmId' => $filmId,
@@ -202,7 +202,7 @@ class InventoryController extends Controller
             'releaseYear' => $firstInventory['film']['releaseYear'] ?? null,
         ];
 
-        // PrÃ©parer les dÃ©tails des inventaires
+        // Préparer les détails des inventaires
         $inventoryDetails = [];
         foreach ($filmInventories as $inventory) {
             $inventoryDetails[] = [
@@ -261,11 +261,11 @@ class InventoryController extends Controller
             Cache::forget('all_inventories');
         }
 
-        // PrÃ©parer le message de retour
+        // Préparer le message de retour
         if ($failedCount === 0) {
             return response()->json([
                 'success' => true,
-                'message' => $successCount . ' DVD(s) supprimÃ©(s) avec succÃ¨s'
+                'message' => $successCount . ' DVD(s) supprimé(s) avec succÃ¨s'
             ]);
         } elseif ($successCount === 0) {
             return response()->json([
@@ -275,7 +275,7 @@ class InventoryController extends Controller
         } else {
             return response()->json([
                 'success' => true,
-                'message' => $successCount . ' DVD(s) supprimÃ©(s), ' . $failedCount . ' Ã©chec(s)'
+                'message' => $successCount . ' DVD(s) supprimé(s), ' . $failedCount . ' échec(s)'
             ]);
         }
     }

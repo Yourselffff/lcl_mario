@@ -16,6 +16,7 @@ Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name
 // Routes films protégées par authentification
 Route::middleware('auth')->group(function () {
     Route::get('/films', [FilmController::class, 'index'])->name('films.index');
+    Route::post('/films/data', [FilmController::class, 'getData'])->name('films.data');
     Route::get('/films/create', [FilmController::class, 'create'])->name('films.create');
     Route::post('/films', [FilmController::class, 'store'])->name('films.store');
     Route::get('/films/{id}/edit', [FilmController::class, 'edit'])->name('films.edit');
