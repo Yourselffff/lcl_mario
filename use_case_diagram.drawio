@@ -1,0 +1,144 @@
+<mxfile host="app.diagrams.net" modified="2026-03-06" agent="Claude" version="21.0.0">
+  <diagram name="Use Case" id="use-case-rftg">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Titre -->
+        <mxCell id="title" value="Use Case" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="400" y="20" width="280" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ===== ACTEURS ===== -->
+
+        <!-- Utilisateur -->
+        <mxCell id="actor_user" value="Utilisateur" style="shape=mxgraph.uml.actor;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontStyle=0;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="960" y="270" width="50" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Administrateur -->
+        <mxCell id="actor_admin" value="Administrateur" style="shape=mxgraph.uml.actor2;whiteSpace=wrap;html=1;fillColor=#b0b0b0;strokeColor=#666666;fontStyle=0;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="490" y="700" width="50" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- ===== CAS D'UTILISATION ===== -->
+
+        <!-- S'authentifier (bleu) -->
+        <mxCell id="uc_auth" value="S'authentifier" style="ellipse;whiteSpace=wrap;html=1;fillColor=#4472C4;fontColor=#ffffff;strokeColor=#274080;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="440" y="90" width="200" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- Liste des films (rouge) -->
+        <mxCell id="uc_films" value="Liste des films" style="ellipse;whiteSpace=wrap;html=1;fillColor=#D64045;fontColor=#ffffff;strokeColor=#9B1117;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="250" y="240" width="180" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- Détails du film (rose) -->
+        <mxCell id="uc_film_detail" value="Détails du film" style="ellipse;whiteSpace=wrap;html=1;fillColor=#C0398F;fontColor=#ffffff;strokeColor=#8A0064;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="60" y="360" width="180" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- Liste du stock DVDs (rouge) -->
+        <mxCell id="uc_stock" value="Liste du stock des DVDs" style="ellipse;whiteSpace=wrap;html=1;fillColor=#D64045;fontColor=#ffffff;strokeColor=#9B1117;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="560" y="240" width="190" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- Vérifier disponibilité (bleu) -->
+        <mxCell id="uc_avail" value="Vérifier disponibilité DVD" style="ellipse;whiteSpace=wrap;html=1;fillColor=#4472C4;fontColor=#ffffff;strokeColor=#274080;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="700" y="360" width="190" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- Ajouter un film (vert) -->
+        <mxCell id="uc_add_film" value="Ajouter un film" style="ellipse;whiteSpace=wrap;html=1;fillColor=#27AE60;fontColor=#ffffff;strokeColor=#1A7A42;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="55" y="510" width="155" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- Modifier un film (vert) -->
+        <mxCell id="uc_edit_film" value="Modifier un film" style="ellipse;whiteSpace=wrap;html=1;fillColor=#27AE60;fontColor=#ffffff;strokeColor=#1A7A42;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="225" y="510" width="155" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- Supprimer un film (vert) -->
+        <mxCell id="uc_del_film" value="Supprimer un film" style="ellipse;whiteSpace=wrap;html=1;fillColor=#27AE60;fontColor=#ffffff;strokeColor=#1A7A42;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="395" y="510" width="155" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- Ajouter des DVDs (vert) -->
+        <mxCell id="uc_add_dvd" value="Ajouter des DVDs" style="ellipse;whiteSpace=wrap;html=1;fillColor=#27AE60;fontColor=#ffffff;strokeColor=#1A7A42;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="565" y="510" width="155" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- Supprimer des DVDs (vert) -->
+        <mxCell id="uc_del_dvd" value="Supprimer des DVDs" style="ellipse;whiteSpace=wrap;html=1;fillColor=#27AE60;fontColor=#ffffff;strokeColor=#1A7A42;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="735" y="510" width="155" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- ===== CONNEXIONS UTILISATEUR ===== -->
+
+        <!-- Utilisateur → S'authentifier -->
+        <mxCell id="e1" style="endArrow=none;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" source="actor_user" target="uc_auth" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Utilisateur → Liste des films -->
+        <mxCell id="e2" style="endArrow=none;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" source="actor_user" target="uc_films" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Utilisateur → Liste du stock DVDs -->
+        <mxCell id="e3" style="endArrow=none;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" source="actor_user" target="uc_stock" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Liste des films → Détails du film -->
+        <mxCell id="e4" style="endArrow=open;endFill=0;html=1;" edge="1" source="uc_films" target="uc_film_detail" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Liste du stock DVDs → Vérifier disponibilité -->
+        <mxCell id="e5" style="endArrow=open;endFill=0;html=1;" edge="1" source="uc_stock" target="uc_avail" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ===== CONNEXIONS ADMINISTRATEUR ===== -->
+
+        <!-- Administrateur → Liste des films -->
+        <mxCell id="e6" style="endArrow=none;html=1;" edge="1" source="actor_admin" target="uc_films" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Administrateur → Liste du stock DVDs -->
+        <mxCell id="e7" style="endArrow=none;html=1;" edge="1" source="actor_admin" target="uc_stock" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Administrateur → Ajouter un film -->
+        <mxCell id="e8" style="endArrow=none;html=1;" edge="1" source="actor_admin" target="uc_add_film" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Administrateur → Modifier un film -->
+        <mxCell id="e9" style="endArrow=none;html=1;" edge="1" source="actor_admin" target="uc_edit_film" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Administrateur → Supprimer un film -->
+        <mxCell id="e10" style="endArrow=none;html=1;" edge="1" source="actor_admin" target="uc_del_film" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Administrateur → Ajouter des DVDs -->
+        <mxCell id="e11" style="endArrow=none;html=1;" edge="1" source="actor_admin" target="uc_add_dvd" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Administrateur → Supprimer des DVDs -->
+        <mxCell id="e12" style="endArrow=none;html=1;" edge="1" source="actor_admin" target="uc_del_dvd" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
