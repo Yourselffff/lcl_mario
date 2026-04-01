@@ -3,12 +3,14 @@
 
 namespace App\Services;
 
+use App\Services\Traits\HasToadToken;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 
 class ToadInventoryService
 {
+    use HasToadToken;
     private string $baseUrl;
 
     public function __construct()
@@ -279,14 +281,4 @@ class ToadInventoryService
         }
     }
 
-    /**
-     * Récupère le token JWT depuis la session utilisateur
-     */
-    private function getUserToken(): ?string
-    {
-        $userData = session('toad_user');
-        Log::info('Récupération token utilisateur', ['userData' => $userData]);
-
-        return $userData['token'] ?? null;
-    }
 }

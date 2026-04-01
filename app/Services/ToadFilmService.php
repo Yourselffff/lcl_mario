@@ -3,11 +3,13 @@
 
 namespace App\Services;
 
+use App\Services\Traits\HasToadToken;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class ToadFilmService
 {
+    use HasToadToken;
     private string $baseUrl;
 
     public function __construct()
@@ -17,25 +19,35 @@ class ToadFilmService
 
     public function getAllFilms(int $limit = 10, int $offset = 0): ?array
     {
-        $url = $this->baseUrl . '/films?' . http_build_query(['limit' => $limit, 'offset' => $offset]);
+        $url = $this->baseUrl . '/films';
 
         try {
             $headers = ['Accept' => 'application/json'];
 
-            // Récupère le token JWT depuis la session
             $token = $this->getUserToken();
             if ($token) {
                 $headers['Authorization'] = "Bearer {$token}";
             }
 
-            Log::info('Appel API Films', ['url' => $url, 'has_token' => !empty($token)]);
+            Log::info('Appel API Films', ['url' => $url, 'limit' => $limit, 'offset' => $offset]);
 
             $response = Http::withHeaders($headers)
-                ->timeout(10)
-                ->get($url);
+                ->timeout(15)
+                ->get($url, ['limit' => $limit, 'offset' => $offset]);
 
             if ($response->successful()) {
-                return $response->json();
+                $body = $response->json();
+                // Réponse paginée (ex: {content: [...], totalElements: N})
+                if (isset($body['content'])) {
+                    return $body['content'];
+                }
+                // Réponse plain array : si > limit films retournés, l'API a ignoré les params → slice PHP
+                if (is_array($body)) {
+                    return count($body) > $limit
+                        ? array_slice($body, $offset, $limit)
+                        : $body;
+                }
+                return null;
             }
 
             Log::warning('Films API KO', ['status' => $response->status(), 'body' => $response->body()]);
@@ -256,14 +268,4 @@ class ToadFilmService
         }
     }
 
-    /**
-     * Récupère le token JWT depuis la session utilisateur
-     */
-    private function getUserToken(): ?string
-    {
-        $userData = session('toad_user');
-        Log::info('Récupération token utilisateur', ['userData' => $userData]);
-
-        return $userData['token'] ?? null;
-    }
 }

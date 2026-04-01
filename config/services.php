@@ -36,8 +36,14 @@ return [
     ],
 /** Service pour API Toad */
     'toad' => [
-    'url' => env('TOAD_API_URL').':'.env('TOAD_API_PORT'),
-    'token' => env('TOAD_API_TOKEN'),
+        'url'        => env('TOAD_API_URL') . ':' . env('TOAD_API_PORT'),
+        'token'      => env('TOAD_API_TOKEN'),
+        'jwt_secret' => env('TOAD_CLIENT_JWT_SECRET'),
+        'jwt_iss'    => env('TOAD_CLIENT_JWT_ISS', 'mario-app'),
+        'jwt_aud'    => env('TOAD_CLIENT_JWT_AUD', 'toad-api'),
+        'jwt_ttl'        => env('TOAD_CLIENT_JWT_TTL', 3600),
+        'admin_email'    => env('TOAD_ADMIN_EMAIL'),
+        'admin_password' => env('TOAD_ADMIN_PASSWORD'),
     ],
 
 ];

@@ -1,4 +1,3 @@
-
 @extends('layouts.app')
 
 @section('content')
@@ -7,9 +6,9 @@
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Gestion du catalogue de films</h5>
-                    <a href="{{ route('films.create') }}" class="btn btn-primary btn-sm">
-                        <i class="bi bi-plus-circle"></i> Ajouter un film
+                    <h5 class="mb-0">Gestion des clients</h5>
+                    <a href="{{ route('customers.create') }}" class="btn btn-primary btn-sm">
+                        <i class="bi bi-plus-circle"></i> Ajouter un client
                     </a>
                 </div>
 
@@ -30,7 +29,7 @@
 
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <div>
-                            <span class="text-muted">Total : <strong id="totalFilms">-</strong> film(s)</span>
+                            <span class="text-muted">Total : <strong id="totalCustomers">-</strong> client(s)</span>
                         </div>
                         <div class="d-flex align-items-center gap-2">
                             <label for="limit" class="mb-0">Afficher :</label>
@@ -49,26 +48,26 @@
                         </div>
                     </div>
 
-                    <div id="noFilms" class="alert alert-warning" style="display: none;">
+                    <div id="noCustomers" class="alert alert-warning" style="display: none;">
                         <i class="bi bi-exclamation-triangle"></i>
-                        Aucun film disponible ou erreur lors de la récupération des données de l'API.
+                        Aucun client disponible ou erreur lors de la récupération des données de l'API.
                     </div>
 
-                    <div id="filmsContainer" style="display: none;">
+                    <div id="customersContainer" style="display: none;">
                         <div class="table-responsive">
                             <table class="table table-striped table-hover">
                                 <thead class="table-dark">
                                     <tr>
                                         <th>ID</th>
-                                        <th>Titre</th>
-                                        <th>Description</th>
-                                        <th>Annee</th>
-                                        <th>Duree</th>
-                                        <th>Note</th>
+                                        <th>Prénom</th>
+                                        <th>Nom</th>
+                                        <th>Email</th>
+                                        <th>Magasin</th>
+                                        <th>Actif</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody id="filmsTableBody">
+                                <tbody id="customersTableBody">
                                 </tbody>
                             </table>
                         </div>
@@ -78,7 +77,7 @@
                                 <i class="bi bi-info-circle"></i>
                                 Page <strong id="currentPageInfo">1</strong> sur <strong id="totalPagesInfo">1</strong>
                             </p>
-                            <nav aria-label="Pagination des films">
+                            <nav aria-label="Pagination des clients">
                                 <ul class="pagination mb-0" id="paginationList">
                                 </ul>
                             </nav>
@@ -91,31 +90,31 @@
 </div>
 
 <script>
-    const FilmsPagination = {
+    const CustomersPagination = {
         currentPage: 1,
         limit: 10,
         totalPages: 1,
         csrfToken: '{{ csrf_token() }}',
-        dataUrl: '{{ route("films.data") }}',
-        showUrl: '{{ url("films") }}',
-        editUrl: '{{ url("films") }}',
-        deleteUrl: '{{ url("films") }}',
+        dataUrl: '{{ route("customers.data") }}',
+        showUrl: '{{ url("customers") }}',
+        editUrl: '{{ url("customers") }}',
+        deleteUrl: '{{ url("customers") }}',
 
         init() {
             this.limit = 10;
             document.getElementById('limit').value = this.limit;
-            this.loadFilms();
+            this.loadCustomers();
             document.getElementById('limit').addEventListener('change', (e) => {
                 this.limit = parseInt(e.target.value);
                 this.currentPage = 1;
-                this.loadFilms();
+                this.loadCustomers();
             });
         },
 
-        async loadFilms() {
+        async loadCustomers() {
             document.getElementById('loading').style.display = 'block';
-            document.getElementById('filmsContainer').style.display = 'none';
-            document.getElementById('noFilms').style.display = 'none';
+            document.getElementById('customersContainer').style.display = 'none';
+            document.getElementById('noCustomers').style.display = 'none';
 
             try {
                 const response = await fetch(this.dataUrl, {
@@ -125,64 +124,64 @@
                         'X-CSRF-TOKEN': this.csrfToken,
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify({
-                        page: this.currentPage,
-                        limit: this.limit
-                    })
+                    body: JSON.stringify({ page: this.currentPage, limit: this.limit })
                 });
 
                 const data = await response.json();
                 document.getElementById('loading').style.display = 'none';
 
-                if (!data.films || data.films.length === 0) {
-                    document.getElementById('noFilms').style.display = 'block';
+                if (!data.customers || data.customers.length === 0) {
+                    document.getElementById('noCustomers').style.display = 'block';
                     return;
                 }
 
                 this.totalPages = data.totalPages;
-                this.renderFilms(data.films);
+                this.renderCustomers(data.customers);
                 this.renderPagination(data);
-                document.getElementById('filmsContainer').style.display = 'block';
+                document.getElementById('customersContainer').style.display = 'block';
 
             } catch (error) {
                 console.error('Erreur:', error);
                 document.getElementById('loading').style.display = 'none';
-                document.getElementById('noFilms').style.display = 'block';
+                document.getElementById('noCustomers').style.display = 'block';
             }
         },
 
-        renderFilms(films) {
-            const tbody = document.getElementById('filmsTableBody');
+        renderCustomers(customers) {
+            const tbody = document.getElementById('customersTableBody');
             tbody.innerHTML = '';
 
-            films.forEach(film => {
-                const filmId = film.filmId || film.id || 'N/A';
-                const title = film.title || 'Sans titre';
-                const description = film.description ? (film.description.length > 80 ? film.description.substring(0, 80) + '...' : film.description) : 'Aucune description';
-                const releaseYear = film.releaseYear || 'N/A';
-                const length = film.length ? film.length + ' min' : 'N/A min';
-                const rating = film.rating ? `<span class="badge bg-info">${film.rating}</span>` : '<span class="badge bg-secondary">N/A</span>';
+            customers.forEach(c => {
+                const id        = c.customerId ?? 'N/A';
+                const firstName = c.firstName ?? '';
+                const lastName  = c.lastName ?? '';
+                const email     = c.email ?? 'N/A';
+                const storeId   = c.storeId ?? 'N/A';
+                const active    = c.active
+                    ? '<span class="badge bg-success">Actif</span>'
+                    : '<span class="badge bg-secondary">Inactif</span>';
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${filmId}</td>
-                    <td><strong>${this.escapeHtml(title)}</strong></td>
-                    <td>${this.escapeHtml(description)}</td>
-                    <td>${releaseYear}</td>
-                    <td>${length}</td>
-                    <td>${rating}</td>
+                    <td>${id}</td>
+                    <td>${this.escapeHtml(firstName)}</td>
+                    <td><strong>${this.escapeHtml(lastName)}</strong></td>
+                    <td>${this.escapeHtml(email)}</td>
+                    <td>${storeId}</td>
+                    <td>${active}</td>
                     <td>
                         <div class="d-flex gap-2">
-                            <a href="${this.showUrl}/${filmId}" class="btn btn-info btn-sm" title="Voir les details">
+                            <a href="${this.showUrl}/${id}" class="btn btn-info btn-sm" title="Voir les détails">
                                 <i class="bi bi-eye"></i> Voir
                             </a>
-                            <a href="${this.editUrl}/${filmId}/edit" class="btn btn-warning btn-sm text-white" title="Modifier le film">
+                            <a href="${this.editUrl}/${id}/edit" class="btn btn-warning btn-sm text-white" title="Modifier">
                                 <i class="bi bi-pencil"></i> Modifier
                             </a>
-                            <form action="${this.deleteUrl}/${filmId}" method="POST" style="display: inline;" onsubmit="return confirm('Etes-vous sur de vouloir supprimer ce film ?')">
+                            <form action="${this.deleteUrl}/${id}" method="POST" style="display: inline;"
+                                  onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce client ?')">
                                 <input type="hidden" name="_token" value="${this.csrfToken}">
                                 <input type="hidden" name="_method" value="DELETE">
-                                <button type="submit" class="btn btn-danger btn-sm" title="Supprimer le film">
+                                <button type="submit" class="btn btn-danger btn-sm" title="Supprimer">
                                     <i class="bi bi-trash"></i> Supprimer
                                 </button>
                             </form>
@@ -194,7 +193,7 @@
         },
 
         renderPagination(data) {
-            document.getElementById('totalFilms').textContent = data.totalFilms;
+            document.getElementById('totalCustomers').textContent = data.totalCustomers;
             document.getElementById('currentPageInfo').textContent = data.currentPage;
             document.getElementById('totalPagesInfo').textContent = data.totalPages;
 
@@ -207,21 +206,15 @@
             const paginationList = document.getElementById('paginationList');
             paginationList.innerHTML = '';
 
-            // Premiere page
             paginationList.appendChild(this.createPageItem('<<', 1, data.currentPage === 1));
-
-            // Page precedente
             paginationList.appendChild(this.createPageItem('<', Math.max(1, data.currentPage - 1), data.currentPage === 1));
 
-            // Numeros de pages
             const start = Math.max(1, data.currentPage - 2);
-            const end = Math.min(data.totalPages, data.currentPage + 2);
+            const end   = Math.min(data.totalPages, data.currentPage + 2);
 
             if (start > 1) {
                 paginationList.appendChild(this.createPageItem('1', 1, false));
-                if (start > 2) {
-                    paginationList.appendChild(this.createPageItem('...', null, true));
-                }
+                if (start > 2) paginationList.appendChild(this.createPageItem('...', null, true));
             }
 
             for (let i = start; i <= end; i++) {
@@ -229,16 +222,11 @@
             }
 
             if (end < data.totalPages) {
-                if (end < data.totalPages - 1) {
-                    paginationList.appendChild(this.createPageItem('...', null, true));
-                }
+                if (end < data.totalPages - 1) paginationList.appendChild(this.createPageItem('...', null, true));
                 paginationList.appendChild(this.createPageItem(data.totalPages.toString(), data.totalPages, false));
             }
 
-            // Page suivante
             paginationList.appendChild(this.createPageItem('>', Math.min(data.totalPages, data.currentPage + 1), data.currentPage === data.totalPages));
-
-            // Derniere page
             paginationList.appendChild(this.createPageItem('>>', data.totalPages, data.currentPage === data.totalPages));
         },
 
@@ -256,7 +244,7 @@
                 a.addEventListener('click', (e) => {
                     e.preventDefault();
                     this.currentPage = page;
-                    this.loadFilms();
+                    this.loadCustomers();
                 });
                 li.appendChild(a);
             }
@@ -271,6 +259,6 @@
         }
     };
 
-    document.addEventListener('DOMContentLoaded', () => FilmsPagination.init());
+    document.addEventListener('DOMContentLoaded', () => CustomersPagination.init());
 </script>
 @endsection

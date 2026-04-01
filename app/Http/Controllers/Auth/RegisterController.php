@@ -2,71 +2,60 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Auth\ToadUser;
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use Illuminate\Foundation\Auth\RegistersUsers;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
+use App\Services\ToadStaffService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class RegisterController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Register Controller
-    |--------------------------------------------------------------------------
-    |
-    | This controller handles the registration of new users as well as their
-    | validation and creation. By default this controller uses a trait to
-    | provide this functionality without requiring any additional code.
-    |
-    */
-
-    use RegistersUsers;
-
-    /**
-     * Where to redirect users after registration.
-     *
-     * @var string
-     */
     protected $redirectTo = '/home';
 
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
     public function __construct()
     {
         $this->middleware('guest');
     }
 
-    /**
-     * Get a validator for an incoming registration request.
-     *
-     * @param  array  $data
-     * @return \Illuminate\Contracts\Validation\Validator
-     */
-    protected function validator(array $data)
+    public function showRegistrationForm()
     {
-        return Validator::make($data, [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-        ]);
+        return view('auth.register');
     }
 
-    /**
-     * Create a new user instance after a valid registration.
-     *
-     * @param  array  $data
-     * @return \App\Models\User
-     */
-    protected function create(array $data)
+    public function register(Request $request)
     {
-        return User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
+        $request->validate([
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name'  => ['required', 'string', 'max:255'],
+            'username'   => ['required', 'string', 'max:255'],
+            'email'      => ['required', 'string', 'email', 'max:255'],
+            'password'   => ['required', 'string', 'min:8', 'confirmed'],
         ]);
+
+        $staffService = app(ToadStaffService::class);
+        $result = $staffService->createStaff($request->all());
+
+        if (!empty($result['_error'])) {
+            throw ValidationException::withMessages([
+                'email' => ['Erreur API (' . $result['status'] . ') : ' . $result['message']],
+            ]);
+        }
+
+        // Connecter l'utilisateur en mémoire (comme le LoginController)
+        $userData = [
+            'id'    => $result['staffId'] ?? $result['id'] ?? $request->input('email'),
+            'email' => $result['email'] ?? $request->input('email'),
+            'name'  => trim(($result['firstName'] ?? $request->input('first_name')) . ' ' . ($result['lastName'] ?? $request->input('last_name'))),
+            'token' => null,
+            'staff' => $result,
+        ];
+
+        $request->session()->put('toad_user', $userData);
+
+        $user = new ToadUser($userData);
+        Auth::login($user, false);
+
+        return redirect($this->redirectTo);
     }
 }
