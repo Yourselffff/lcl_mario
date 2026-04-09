@@ -6,11 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Services\ToadAuthService;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
-//use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use App\Auth\ToadUser;
 
+/**
+ * Gère la connexion des utilisateurs via l'API Toad.
+ * Remplace le flux d'authentification Eloquent par défaut de Laravel.
+ */
 class LoginController extends Controller
 {
     use AuthenticatesUsers;
@@ -24,6 +27,11 @@ class LoginController extends Controller
         $this->toadAuth = $toadAuth;
     }
 
+    /**
+     * Authentifie l'utilisateur via l'API Toad puis crée la session Laravel.
+     *
+     * @throws ValidationException Si les identifiants sont refusés par l'API
+     */
     public function login(Request $request)
     {
         $this->validateLogin($request);
@@ -39,25 +47,25 @@ class LoginController extends Controller
             ]);
         }
 
-        // Selon votre API: { token, type, staff:{...} } ou directement { ...staff... }
+        // L'API peut retourner { token, staff: {...} } ou directement les données du staff
         $staff = $resp['staff'] ?? $resp;
 
         $userData = [
-            'id'        => $staff['staffId'] ?? $staff['id'] ?? $staff['email'],
-            'email'     => $staff['email'] ?? null,
-            'name'      => $staff['name']
-                           ?? trim(($staff['first_name'] ?? '').' '.($staff['last_name'] ?? ''))
-                           ?: ($staff['email'] ?? 'Utilisateur'),
-            'token'     => $resp['token'] ?? $resp['access_token'] ?? null, // token JWT Toad si renvoyé
-            'staff'     => $staff, // on garde toutes les infos utiles
+            'id'    => $staff['staffId'] ?? $staff['id'] ?? $staff['email'],
+            'email' => $staff['email'] ?? null,
+            'name'  => $staff['name']
+                       ?? trim(($staff['first_name'] ?? '') . ' ' . ($staff['last_name'] ?? ''))
+                       ?: ($staff['email'] ?? 'Utilisateur'),
+            'token' => $resp['token'] ?? $resp['access_token'] ?? null,
+            'staff' => $staff,
         ];
 
-        // Enregistrer l’utilisateur en session
+        // Stocke les données en session pour le ToadUserProvider
         $request->session()->put('toad_user', $userData);
 
-        // Connecter un utilisateur “en mémoire”
+        // Crée l'objet utilisateur en mémoire et ouvre la session Laravel
         $user = new ToadUser($userData);
-        Auth::login($user, false); // éviter remember me (non supporté par ce provider)
+        Auth::login($user, false); // remember=false : pas de remember token
 
         return $this->sendLoginResponse($request);
     }
@@ -65,7 +73,7 @@ class LoginController extends Controller
     protected function validateLogin(Request $request)
     {
         $request->validate([
-            'email' => 'required|string|email',
+            'email'    => 'required|string|email',
             'password' => 'required|string',
         ]);
     }

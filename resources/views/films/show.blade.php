@@ -1,3 +1,4 @@
+{{-- Vue détail d'un film. Données passées depuis FilmController::show() via la variable $film. --}}
 @extends('layouts.app')
 
 @section('content')
@@ -81,6 +82,7 @@
                         <a href="{{ route('films.edit', $film['filmId'] ?? $film['id']) }}" class="btn btn-warning text-white">
                             <i class="bi bi-pencil"></i> Modifier
                         </a>
+                        {{-- Suppression via formulaire POST + @method('DELETE') car les navigateurs ne supportent pas DELETE nativement --}}
                         <form action="{{ route('films.destroy', $film['filmId'] ?? $film['id']) }}"
                               method="POST"
                               style="display: inline;"

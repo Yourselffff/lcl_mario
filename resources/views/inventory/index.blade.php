@@ -1,3 +1,10 @@
+{{-- =============================================================================
+     Liste des DVDs groupés par film.
+     Les données sont préparées côté serveur par InventoryController::index()
+     (regroupement PHP des inventaires par filmId).
+     La disponibilité de chaque DVD est vérifiée à la demande via AJAX
+     (GET /inventory/{id}/check-availability) pour éviter de surcharger la page.
+     ============================================================================= --}}
 @extends('layouts.app')
 
 @section('content')

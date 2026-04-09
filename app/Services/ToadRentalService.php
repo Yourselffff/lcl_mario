@@ -6,23 +6,32 @@ use App\Services\Traits\HasToadToken;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Service locations (rentals) via l'API Toad.
+ * Endpoints : GET /rentals/all, GET/PUT /rentals/{id}
+ */
 class ToadRentalService
 {
     use HasToadToken;
-    private string $baseUrl;
 
     public function __construct()
     {
-        $this->baseUrl = rtrim((string) config('services.toad.url', 'http://localhost:8180'), '/');
     }
 
+    /**
+     * Retourne une page de locations (avec pagination API).
+     *
+     * @param  int        $limit
+     * @param  int        $offset
+     * @return array|null Réponse paginée {content, totalElements, totalPages}, null si erreur
+     */
     public function getAllRentals(int $limit = 10, int $offset = 0): ?array
     {
-        $url = $this->baseUrl . '/rentals/all';
+        $url = $this->getBaseUrl() . '/rentals/all';
 
         try {
             $headers = ['Accept' => 'application/json'];
-            $token = $this->getUserToken();
+            $token   = $this->getUserToken();
             if ($token) {
                 $headers['Authorization'] = "Bearer {$token}";
             }
@@ -46,50 +55,54 @@ class ToadRentalService
     }
 
     /**
-     * Récupère toutes les locations en une seule fois (pour filtrage PHP).
-     * Utilisé quand un filtre de statut est actif.
+     * Récupère toutes les locations en deux appels (d'abord le total, puis tout).
+     * Utilisé uniquement quand un filtre par statut est actif (filtrage côté PHP).
+     *
+     * @return array|null Tableau plat de toutes les locations, null si erreur
      */
     public function fetchAllRentals(): ?array
     {
-        $url = $this->baseUrl . '/rentals/all';
+        $url = $this->getBaseUrl() . '/rentals/all';
 
         try {
             $headers = ['Accept' => 'application/json'];
-            $token = $this->getUserToken();
+            $token   = $this->getUserToken();
             if ($token) {
                 $headers['Authorization'] = "Bearer {$token}";
             }
 
-            // Premier appel pour connaître le total
+            // 1er appel : récupère le total via limit=1 pour éviter de tout charger inutilement
             $first = Http::withHeaders($headers)->timeout(15)->get($url, ['limit' => 1, 'offset' => 0]);
             if (!$first->successful()) {
                 return null;
             }
+
             $total = (int) ($first->json()['totalElements'] ?? 0);
             if ($total === 0) {
                 return [];
             }
 
-            // Second appel avec le total complet
+            // 2e appel : récupère toutes les locations pour le filtrage PHP
             $response = Http::withHeaders($headers)->timeout(30)->get($url, ['limit' => $total, 'offset' => 0]);
-            if ($response->successful()) {
-                return $response->json()['content'] ?? [];
-            }
 
-            return null;
+            return $response->successful() ? ($response->json()['content'] ?? []) : null;
         } catch (\Throwable $e) {
             Log::error('Erreur API fetchAllRentals', ['msg' => $e->getMessage()]);
             return null;
         }
     }
 
+    /**
+     * @param  int        $id
+     * @return array|null Détail de la location, null si introuvable
+     */
     public function getRentalById(int $id): ?array
     {
-        $url = $this->baseUrl . '/rentals/' . $id;
+        $url = $this->getBaseUrl() . '/rentals/' . $id;
 
         try {
             $headers = ['Accept' => 'application/json'];
-            $token = $this->getUserToken();
+            $token   = $this->getUserToken();
             if ($token) {
                 $headers['Authorization'] = "Bearer {$token}";
             }
@@ -108,9 +121,17 @@ class ToadRentalService
         }
     }
 
+    /**
+     * Mise à jour complète d'une location (PUT).
+     * L'API requiert tous les champs même pour une simple mise à jour de statut.
+     *
+     * @param  int        $id
+     * @param  array      $data Champs : rentalId, rentalDate, returnDate, inventoryId, customerId, staffId, statusId
+     * @return array|null Location mise à jour, null si échec
+     */
     public function updateRental(int $id, array $data): ?array
     {
-        $url = $this->baseUrl . '/rentals/' . $id;
+        $url = $this->getBaseUrl() . '/rentals/' . $id;
 
         try {
             $headers = [
@@ -135,5 +156,4 @@ class ToadRentalService
             return null;
         }
     }
-
 }

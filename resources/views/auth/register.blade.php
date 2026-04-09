@@ -1,3 +1,4 @@
+{{-- Formulaire d'inscription. Crée un nouveau staff via l'API Toad (RegisterController → ToadStaffService::createStaff()). --}}
 @extends('layouts.app')
 
 @section('content')

@@ -1,3 +1,8 @@
+{{-- =============================================================================
+     Tableau de bord (Dashboard).
+     Première page affichée après la connexion.
+     Accessible uniquement aux utilisateurs authentifiés (middleware 'auth').
+     ============================================================================= --}}
 @extends('layouts.app')
 
 @section('content')
@@ -8,6 +13,7 @@
                 <div class="card-header">{{ __('Dashboard') }}</div>
 
                 <div class="card-body">
+                    {{-- Affiche le message flash 'status' si présent en session (ex: après vérification email) --}}
                     @if (session('status'))
                         <div class="alert alert-success" role="alert">
                             {{ session('status') }}

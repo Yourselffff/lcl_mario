@@ -1,3 +1,6 @@
+{{-- Formulaire de création d'un film.
+     old('champ') restaure la valeur saisie en cas d'erreur de validation (pas de perte de données).
+     @error('champ') affiche le message d'erreur Laravel sous le champ concerné. --}}
 @extends('layouts.app')
 
 @section('content')

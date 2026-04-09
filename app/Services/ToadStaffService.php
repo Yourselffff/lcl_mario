@@ -6,24 +6,29 @@ use App\Services\Traits\HasToadToken;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Service création de staff via l'API Toad.
+ * Utilisé lors de l'inscription d'un nouvel utilisateur.
+ */
 class ToadStaffService
 {
     use HasToadToken;
 
-    private string $baseUrl;
-
     public function __construct()
     {
-        $this->baseUrl = rtrim((string) config('services.toad.url', 'http://localhost:8180'), '/');
     }
 
     /**
-     * Retourne le tableau de la réponse si succès, ou ['_error' => true, 'status' => ..., 'message' => ...] si échec.
+     * Crée un nouveau membre du personnel via l'API Toad.
+     *
+     * @param  array $data Champs : first_name, last_name, email, username, password, address_id, store_id
+     * @return array Données du staff créé, ou ['_error' => true, 'status' => int, 'message' => string] si échec
      */
     public function createStaff(array $data): array
     {
-        $url = $this->baseUrl . '/staffs';
+        $url = $this->getBaseUrl() . '/staffs';
 
+        // Conversion du format snake_case (formulaire Laravel) → camelCase (API Java)
         $payload = [
             'firstName'  => $data['first_name'],
             'lastName'   => $data['last_name'],
@@ -50,6 +55,7 @@ class ToadStaffService
                 'body'   => $response->body(),
             ]);
 
+            // Retourne un tableau d'erreur structuré pour que l'appelant puisse l'afficher
             $body = $response->json();
             return [
                 '_error'  => true,

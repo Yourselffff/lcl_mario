@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Services\ToadCustomerService;
 use Illuminate\Http\Request;
 
+/**
+ * Contrôleur CRUD clients.
+ * Délègue toutes les opérations à ToadCustomerService (appels API Toad).
+ */
 class CustomerController extends Controller
 {
     private ToadCustomerService $customerService;
@@ -15,6 +19,7 @@ class CustomerController extends Controller
         $this->customerService = $customerService;
     }
 
+    /** Affiche la liste paginée des clients (chargement AJAX via getData). */
     public function index()
     {
         return view('customers.index', [
@@ -22,6 +27,11 @@ class CustomerController extends Controller
         ]);
     }
 
+    /**
+     * Endpoint AJAX appelé par la vue pour récupérer une page de clients.
+     *
+     * @return \Illuminate\Http\JsonResponse {customers, totalCustomers, totalPages, currentPage}
+     */
     public function getData(Request $request)
     {
         $validated = $request->validate([
@@ -53,16 +63,20 @@ class CustomerController extends Controller
         return view('customers.create');
     }
 
+    /**
+     * Valide et crée un client via l'API.
+     * Les noms sont convertis en majuscules pour correspondre au format de la BDD.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'storeId'    => 'required|integer',
-            'firstName'  => 'required|string|max:45',
-            'lastName'   => 'required|string|max:45',
-            'email'      => 'required|email|max:50',
-            'password'   => 'required|string|min:4',
-            'addressId'  => 'required|integer',
-            'active'     => 'boolean',
+            'storeId'   => 'required|integer',
+            'firstName' => 'required|string|max:45',
+            'lastName'  => 'required|string|max:45',
+            'email'     => 'required|email|max:50',
+            'password'  => 'required|string|min:4',
+            'addressId' => 'required|integer',
+            'active'    => 'boolean',
         ]);
 
         $data = [
@@ -107,6 +121,9 @@ class CustomerController extends Controller
         return view('customers.edit', compact('customer'));
     }
 
+    /**
+     * Met à jour un client. Le mot de passe est optionnel (omis si champ vide).
+     */
     public function update(Request $request, int $id)
     {
         $validated = $request->validate([
@@ -130,6 +147,7 @@ class CustomerController extends Controller
             'createDate' => $validated['createDate'],
         ];
 
+        // N'envoie le mot de passe que s'il a été renseigné dans le formulaire
         if (!empty($validated['password'])) {
             $data['password'] = $validated['password'];
         }

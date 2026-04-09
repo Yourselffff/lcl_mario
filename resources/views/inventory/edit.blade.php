@@ -1,3 +1,4 @@
+{{-- Formulaire de modification du magasin de stockage d'un DVD. @method('PUT') requis pour l'API REST. --}}
 @extends('layouts.app')
 
 @section('content')

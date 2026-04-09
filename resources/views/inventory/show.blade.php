@@ -1,3 +1,4 @@
+{{-- DVDs d'un film spécifique. La disponibilité est vérifiée à la demande via AJAX (GET /inventory/{id}/check-availability). --}}
 @extends('layouts.app')
 
 @section('content')

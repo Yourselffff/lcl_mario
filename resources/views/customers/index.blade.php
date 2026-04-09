@@ -1,3 +1,8 @@
+{{-- =============================================================================
+     Liste paginée des clients (chargement AJAX).
+     Même architecture que films/index : le JS appelle POST /customers/data
+     et met à jour le tableau sans rechargement de page.
+     ============================================================================= --}}
 @extends('layouts.app')
 
 @section('content')

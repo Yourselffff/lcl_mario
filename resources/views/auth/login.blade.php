@@ -1,3 +1,4 @@
+{{-- Formulaire de connexion. Soumis vers LoginController::login() qui vérifie les identifiants via l'API Toad (/staffs/verify). --}}
 @extends('layouts.app')
 
 @section('content')

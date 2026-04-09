@@ -1,30 +1,38 @@
 <?php
 
-
 namespace App\Services;
 
 use App\Services\Traits\HasToadToken;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Service CRUD films via l'API Toad.
+ * Endpoints : GET/POST/PUT/DELETE /films, GET /actors, GET /directors
+ */
 class ToadFilmService
 {
     use HasToadToken;
-    private string $baseUrl;
 
     public function __construct()
     {
-        $this->baseUrl = rtrim((string) config('services.toad.url', 'http://localhost:8180'), '/');
     }
 
+    /**
+     * Retourne une page de films.
+     * Gère deux formats de réponse API : objet paginé {content:[]} ou tableau simple [].
+     *
+     * @param  int        $limit
+     * @param  int        $offset
+     * @return array|null
+     */
     public function getAllFilms(int $limit = 10, int $offset = 0): ?array
     {
-        $url = $this->baseUrl . '/films';
+        $url = $this->getBaseUrl() . '/films';
 
         try {
             $headers = ['Accept' => 'application/json'];
-
-            $token = $this->getUserToken();
+            $token   = $this->getUserToken();
             if ($token) {
                 $headers['Authorization'] = "Bearer {$token}";
             }
@@ -37,16 +45,19 @@ class ToadFilmService
 
             if ($response->successful()) {
                 $body = $response->json();
-                // Réponse paginée (ex: {content: [...], totalElements: N})
+
+                // Format paginé Spring Boot : { content: [...], totalElements: N }
                 if (isset($body['content'])) {
                     return $body['content'];
                 }
-                // Réponse plain array : si > limit films retournés, l'API a ignoré les params → slice PHP
+
+                // Tableau simple : si l'API a ignoré les params, on pagine en PHP
                 if (is_array($body)) {
                     return count($body) > $limit
                         ? array_slice($body, $offset, $limit)
                         : $body;
                 }
+
                 return null;
             }
 
@@ -58,68 +69,66 @@ class ToadFilmService
         }
     }
 
+    /**
+     * @return int Nombre total de films, 0 en cas d'erreur
+     */
     public function getFilmsCount(): int
     {
-        $url = $this->baseUrl . '/films/count';
+        $url = $this->getBaseUrl() . '/films/count';
 
         try {
             $headers = ['Accept' => 'application/json'];
-            $token = $this->getUserToken();
+            $token   = $this->getUserToken();
             if ($token) {
                 $headers['Authorization'] = "Bearer {$token}";
             }
 
-            $response = Http::withHeaders($headers)
-                ->timeout(10)
-                ->get($url);
+            $response = Http::withHeaders($headers)->timeout(10)->get($url);
 
-            if ($response->successful()) {
-                return (int) $response->body();
-            }
-
-            return 0;
+            return $response->successful() ? (int) $response->body() : 0;
         } catch (\Throwable $e) {
             Log::error('Erreur API Films Count', ['msg' => $e->getMessage()]);
             return 0;
         }
     }
 
+    /**
+     * @param  int        $id
+     * @return array|null Détail complet du film, null si introuvable
+     */
     public function getFilmById(int $id): ?array
     {
-        $url = $this->baseUrl . '/films/' . $id;
+        $url = $this->getBaseUrl() . '/films/' . $id;
 
         try {
             $headers = ['Accept' => 'application/json'];
-            $token = $this->getUserToken();
+            $token   = $this->getUserToken();
             if ($token) {
                 $headers['Authorization'] = "Bearer {$token}";
             }
 
-            $response = Http::withHeaders($headers)
-                ->timeout(10)
-                ->get($url);
+            $response = Http::withHeaders($headers)->timeout(10)->get($url);
 
-            if ($response->successful()) {
-                return $response->json();
-            }
-
-            return null;
+            return $response->successful() ? $response->json() : null;
         } catch (\Throwable $e) {
             Log::error('Erreur API Film', ['msg' => $e->getMessage()]);
             return null;
         }
     }
 
+    /**
+     * @param  array      $filmData Champs en camelCase (filmId, title, releaseYear…)
+     * @return array|null Film créé avec son filmId, null si échec
+     */
     public function createFilm(array $filmData): ?array
     {
-        $url = $this->baseUrl . '/films';
+        $url = $this->getBaseUrl() . '/films';
 
         try {
             $headers = [
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json'
+                'Accept'       => 'application/json',
+                'Content-Type' => 'application/json',
             ];
-
             $token = $this->getUserToken();
             if ($token) {
                 $headers['Authorization'] = "Bearer {$token}";
@@ -127,9 +136,7 @@ class ToadFilmService
 
             Log::info('Création film via API', ['url' => $url, 'data' => $filmData]);
 
-            $response = Http::withHeaders($headers)
-                ->timeout(10)
-                ->post($url, $filmData);
+            $response = Http::withHeaders($headers)->timeout(10)->post($url, $filmData);
 
             if ($response->successful()) {
                 Log::info('Film créé avec succès', ['status' => $response->status()]);
@@ -144,16 +151,22 @@ class ToadFilmService
         }
     }
 
+    /**
+     * Mise à jour complète du film (PUT).
+     *
+     * @param  int        $id
+     * @param  array      $filmData Toutes les propriétés du film
+     * @return array|null Film mis à jour, null si échec
+     */
     public function updateFilm(int $id, array $filmData): ?array
     {
-        $url = $this->baseUrl . '/films/' . $id;
+        $url = $this->getBaseUrl() . '/films/' . $id;
 
         try {
             $headers = [
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json'
+                'Accept'       => 'application/json',
+                'Content-Type' => 'application/json',
             ];
-
             $token = $this->getUserToken();
             if ($token) {
                 $headers['Authorization'] = "Bearer {$token}";
@@ -161,9 +174,7 @@ class ToadFilmService
 
             Log::info('Modification film via API', ['url' => $url, 'id' => $id, 'data' => $filmData]);
 
-            $response = Http::withHeaders($headers)
-                ->timeout(10)
-                ->put($url, $filmData);
+            $response = Http::withHeaders($headers)->timeout(10)->put($url, $filmData);
 
             if ($response->successful()) {
                 Log::info('Film modifié avec succès', ['status' => $response->status()]);
@@ -178,22 +189,24 @@ class ToadFilmService
         }
     }
 
+    /**
+     * @param  int  $id
+     * @return bool true si supprimé, false sinon
+     */
     public function deleteFilm(int $id): bool
     {
-        $url = $this->baseUrl . '/films/' . $id;
+        $url = $this->getBaseUrl() . '/films/' . $id;
 
         try {
             $headers = ['Accept' => 'application/json'];
-            $token = $this->getUserToken();
+            $token   = $this->getUserToken();
             if ($token) {
                 $headers['Authorization'] = "Bearer {$token}";
             }
 
             Log::info('Suppression film via API', ['url' => $url, 'id' => $id]);
 
-            $response = Http::withHeaders($headers)
-                ->timeout(10)
-                ->delete($url);
+            $response = Http::withHeaders($headers)->timeout(10)->delete($url);
 
             if ($response->successful()) {
                 Log::info('Film supprimé avec succès', ['status' => $response->status()]);
@@ -209,22 +222,22 @@ class ToadFilmService
     }
 
     /**
-     * Récupère tous les acteurs
+     * Récupère tous les acteurs (utilisé pour le formulaire film).
+     *
+     * @return array|null
      */
     public function getAllActors(): ?array
     {
-        $url = $this->baseUrl . '/actors';
+        $url = $this->getBaseUrl() . '/actors';
 
         try {
             $headers = ['Accept' => 'application/json'];
-            $token = $this->getUserToken();
+            $token   = $this->getUserToken();
             if ($token) {
                 $headers['Authorization'] = "Bearer {$token}";
             }
 
-            $response = Http::withHeaders($headers)
-                ->timeout(10)
-                ->get($url);
+            $response = Http::withHeaders($headers)->timeout(10)->get($url);
 
             if ($response->successful()) {
                 return $response->json();
@@ -239,22 +252,22 @@ class ToadFilmService
     }
 
     /**
-     * Récupère tous les réalisateurs
+     * Récupère tous les réalisateurs (utilisé pour le formulaire film).
+     *
+     * @return array|null
      */
     public function getAllDirectors(): ?array
     {
-        $url = $this->baseUrl . '/directors';
+        $url = $this->getBaseUrl() . '/directors';
 
         try {
             $headers = ['Accept' => 'application/json'];
-            $token = $this->getUserToken();
+            $token   = $this->getUserToken();
             if ($token) {
                 $headers['Authorization'] = "Bearer {$token}";
             }
 
-            $response = Http::withHeaders($headers)
-                ->timeout(10)
-                ->get($url);
+            $response = Http::withHeaders($headers)->timeout(10)->get($url);
 
             if ($response->successful()) {
                 return $response->json();
@@ -267,5 +280,4 @@ class ToadFilmService
             return null;
         }
     }
-
 }

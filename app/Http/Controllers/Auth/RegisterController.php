@@ -9,6 +9,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * Gère l'inscription d'un nouveau membre du personnel.
+ * Crée le compte via l'API Toad puis connecte l'utilisateur directement.
+ */
 class RegisterController extends Controller
 {
     protected $redirectTo = '/home';
@@ -23,6 +27,11 @@ class RegisterController extends Controller
         return view('auth.register');
     }
 
+    /**
+     * Valide le formulaire, crée le staff via l'API, puis connecte l'utilisateur.
+     *
+     * @throws ValidationException Si l'API refuse la création (email existant, etc.)
+     */
     public function register(Request $request)
     {
         $request->validate([
@@ -34,15 +43,16 @@ class RegisterController extends Controller
         ]);
 
         $staffService = app(ToadStaffService::class);
-        $result = $staffService->createStaff($request->all());
+        $result       = $staffService->createStaff($request->all());
 
+        // ToadStaffService retourne ['_error' => true] si l'API a refusé la création
         if (!empty($result['_error'])) {
             throw ValidationException::withMessages([
                 'email' => ['Erreur API (' . $result['status'] . ') : ' . $result['message']],
             ]);
         }
 
-        // Connecter l'utilisateur en mémoire (comme le LoginController)
+        // Connexion automatique après inscription (même logique que LoginController)
         $userData = [
             'id'    => $result['staffId'] ?? $result['id'] ?? $request->input('email'),
             'email' => $result['email'] ?? $request->input('email'),

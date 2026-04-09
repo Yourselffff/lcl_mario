@@ -60,6 +60,8 @@ return [
     */
 
     'providers' => [
+        // Driver 'toad' personnalisé : les utilisateurs sont récupérés depuis la session
+        // (voir App\Auth\ToadUserProvider, enregistré dans App\Providers\AuthServiceProvider)
         'users' => [
             'driver' => 'toad',
         ],

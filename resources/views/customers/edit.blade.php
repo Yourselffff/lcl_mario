@@ -1,3 +1,4 @@
+{{-- Formulaire de modification d'un client. @method('PUT') simule HTTP PUT depuis un formulaire HTML. --}}
 @extends('layouts.app')
 
 @section('content')

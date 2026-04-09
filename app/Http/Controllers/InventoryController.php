@@ -5,6 +5,11 @@ namespace App\Http\Controllers;
 use App\Services\ToadInventoryService;
 use Illuminate\Support\Facades\Cache;
 
+/**
+ * Contrôleur inventaire (DVDs).
+ * Gère l'affichage groupé par film, le CRUD des entrées inventaire
+ * et la vérification de disponibilité d'un DVD.
+ */
 class InventoryController extends Controller
 {
     private ToadInventoryService $inventoryService;
@@ -15,16 +20,19 @@ class InventoryController extends Controller
         $this->inventoryService = $inventoryService;
     }
 
+    /**
+     * Affiche tous les inventaires groupés par film.
+     * Met en cache la liste 5 minutes pour limiter les appels à l'API.
+     */
     public function index()
     {
         $inventories = $this->inventoryService->getAllInventories();
 
-        // Stocker les inventaires en cache pour 5 minutes pour éviter de refaire l'appel API
         if ($inventories) {
             Cache::put('all_inventories', $inventories, 300);
         }
 
-        // Grouper les inventaires par film
+        // Regroupement par filmId : agrège les copies et les stores par film
         $groupedInventories = [];
 
         if ($inventories) {
@@ -33,28 +41,27 @@ class InventoryController extends Controller
 
                 if (!isset($groupedInventories[$filmId])) {
                     $groupedInventories[$filmId] = [
-                        'filmId' => $filmId,
-                        'title' => $inventory['film']['title'] ?? 'Sans titre',
-                        'description' => $inventory['film']['description'] ?? null,
-                        'releaseYear' => $inventory['film']['releaseYear'] ?? null,
-                        'totalCopies' => 0,
-                        'stores' => [],
-                        'inventoryIds' => [],
-                        'inventoryDetails' => []
+                        'filmId'           => $filmId,
+                        'title'            => $inventory['film']['title'] ?? 'Sans titre',
+                        'description'      => $inventory['film']['description'] ?? null,
+                        'releaseYear'      => $inventory['film']['releaseYear'] ?? null,
+                        'totalCopies'      => 0,
+                        'stores'           => [],
+                        'inventoryIds'     => [],
+                        'inventoryDetails' => [],
                     ];
                 }
 
                 $groupedInventories[$filmId]['totalCopies']++;
                 $groupedInventories[$filmId]['inventoryIds'][] = $inventory['inventoryId'];
 
-                // Ajouter les détails de chaque inventaire (sans érifier la disponibilité pour l'instant)
                 $groupedInventories[$filmId]['inventoryDetails'][] = [
                     'inventoryId' => $inventory['inventoryId'],
-                    'storeId' => $inventory['storeId'],
-                    'lastUpdate' => $inventory['lastUpdate'] ?? null
+                    'storeId'     => $inventory['storeId'],
+                    'lastUpdate'  => $inventory['lastUpdate'] ?? null,
                 ];
 
-                // Ajouter le store_id s'il n'est pas déjÃ  dans la liste
+                // Ajoute le storeId à la liste si pas déjà présent
                 $storeId = $inventory['storeId'];
                 if (!in_array($storeId, $groupedInventories[$filmId]['stores'])) {
                     $groupedInventories[$filmId]['stores'][] = $storeId;
@@ -63,53 +70,56 @@ class InventoryController extends Controller
         }
 
         return view('inventory.index', [
-            'groupedInventories' => array_values($groupedInventories)
+            'groupedInventories' => array_values($groupedInventories),
         ]);
     }
 
+    /**
+     * Affiche le formulaire de création d'un DVD.
+     * Accepte un paramètre filmId en query string pour pré-sélectionner un film.
+     */
     public function create(\Illuminate\Http\Request $request)
     {
-        $films = $this->inventoryService->getAllFilms();
+        $films  = $this->inventoryService->getAllFilms();
         $stores = $this->inventoryService->getAllStores();
 
-        // Récupérer le filmId depuis la requÃªte (si fourni)
         $preselectedFilmId = $request->query('filmId');
 
         return view('inventory.create', [
-            'films' => $films ?? [],
-            'stores' => $stores ?? [],
-            'preselectedFilmId' => $preselectedFilmId
+            'films'             => $films ?? [],
+            'stores'            => $stores ?? [],
+            'preselectedFilmId' => $preselectedFilmId,
         ]);
     }
 
+    /**
+     * Crée un DVD (inventaire) et invalide le cache après création.
+     */
     public function store(\Illuminate\Http\Request $request)
     {
         $validated = $request->validate([
-            'filmId' => 'required|integer',
-            'storeId' => 'required|integer'
+            'filmId'  => 'required|integer',
+            'storeId' => 'required|integer',
         ]);
 
         $result = $this->inventoryService->createInventory([
-            'filmId' => $validated['filmId'],
-            'storeId' => $validated['storeId']
+            'filmId'  => $validated['filmId'],
+            'storeId' => $validated['storeId'],
         ]);
 
         if ($result) {
-            // Invalider le cache aprÃ¨s création
             Cache::forget('all_inventories');
 
-            // Si on a un filmId, rediriger vers la page du film
+            // Redirige vers la page du film si le filmId est fourni
             if ($request->has('filmId')) {
                 return redirect()->route('inventory.film.show', $validated['filmId'])
-                    ->with('success', 'Le DVD a été créé avec succÃ¨s');
+                    ->with('success', 'Le DVD a été créé avec succès');
             }
 
-            return redirect()->route('inventory.index')
-                ->with('success', 'Le DVD a été créé avec succÃ¨s');
+            return redirect()->route('inventory.index')->with('success', 'Le DVD a été créé avec succès');
         }
 
-        return redirect()->route('inventory.index')
-            ->with('error', 'Erreur lors de la création du DVD');
+        return redirect()->route('inventory.index')->with('error', 'Erreur lors de la création du DVD');
     }
 
     public function edit($id)
@@ -117,109 +127,98 @@ class InventoryController extends Controller
         $inventory = $this->inventoryService->getInventoryById($id);
 
         if (!$inventory) {
-            return redirect()->route('inventory.index')
-                ->with('error', 'Inventaire non trouvé');
+            return redirect()->route('inventory.index')->with('error', 'Inventaire non trouvé');
         }
 
         $stores = $this->inventoryService->getAllStores();
 
         return view('inventory.edit', [
             'inventory' => $inventory,
-            'stores' => $stores ?? []
+            'stores'    => $stores ?? [],
         ]);
     }
 
+    /**
+     * Met à jour le store d'un inventaire.
+     * L'API requiert filmId ET storeId même si seul le store change.
+     */
     public function update($id, \Illuminate\Http\Request $request)
     {
         $validated = $request->validate([
             'storeId' => 'required|integer',
-            'filmId' => 'required|integer'
+            'filmId'  => 'required|integer',
         ]);
 
-        // Recharger l'inventaire pour s'assurer qu'il existe toujours
         $inventory = $this->inventoryService->getInventoryById($id);
-
         if (!$inventory) {
-            return redirect()->route('inventory.index')
-                ->with('error', 'Inventaire non trouvé');
+            return redirect()->route('inventory.index')->with('error', 'Inventaire non trouvé');
         }
 
-        // Envoyer filmId ET storeId à l'API (requis par l'API)
         $result = $this->inventoryService->updateInventory($id, [
-            'filmId' => $validated['filmId'],
-            'storeId' => $validated['storeId']
+            'filmId'  => $validated['filmId'],
+            'storeId' => $validated['storeId'],
         ]);
 
         if ($result) {
-            // Invalider le cache après modification
             Cache::forget('all_inventories');
-
-            return redirect()->route('inventory.index')
-                ->with('success', 'Le lieu de stockage a été modifié avec succès');
+            return redirect()->route('inventory.index')->with('success', 'Le lieu de stockage a été modifié avec succès');
         }
 
-        return redirect()->route('inventory.index')
-            ->with('error', 'Erreur lors de la modification du lieu de stockage');
+        return redirect()->route('inventory.index')->with('error', 'Erreur lors de la modification du lieu de stockage');
     }
+
     /**
-     * Affiche tous les DVDs d'un film spécifique
+     * Affiche tous les DVDs d'un film spécifique.
+     * Utilise le cache si disponible pour éviter un appel API redondant.
      */
     public function showFilmInventories($filmId)
     {
-        // Essayer de récupérer depuis le cache d'abord
         $inventories = Cache::get('all_inventories');
 
-        // Si pas en cache, faire l'appel API
         if (!$inventories) {
             $inventories = $this->inventoryService->getAllInventories();
-
             if ($inventories) {
                 Cache::put('all_inventories', $inventories, 300);
             }
         }
 
         if (!$inventories) {
-            return redirect()->route('inventory.index')
-                ->with('error', 'Erreur lors de la récupération des données');
+            return redirect()->route('inventory.index')->with('error', 'Erreur lors de la récupération des données');
         }
 
-        // Filtrer les inventaires pour ce film
-        $filmInventories = array_filter($inventories, function($inv) use ($filmId) {
-            return $inv['filmId'] == $filmId;
-        });
+        $filmInventories = array_filter($inventories, fn($inv) => $inv['filmId'] == $filmId);
 
         if (empty($filmInventories)) {
-            return redirect()->route('inventory.index')
-                ->with('error', 'Aucun DVD trouvé pour ce film');
+            return redirect()->route('inventory.index')->with('error', 'Aucun DVD trouvé pour ce film');
         }
 
-        // Récupérer les infos du film depuis le premier inventaire
         $firstInventory = reset($filmInventories);
         $filmInfo = [
-            'filmId' => $filmId,
-            'title' => $firstInventory['film']['title'] ?? 'Sans titre',
+            'filmId'      => $filmId,
+            'title'       => $firstInventory['film']['title'] ?? 'Sans titre',
             'description' => $firstInventory['film']['description'] ?? null,
             'releaseYear' => $firstInventory['film']['releaseYear'] ?? null,
         ];
 
-        // Préparer les détails des inventaires
         $inventoryDetails = [];
         foreach ($filmInventories as $inventory) {
             $inventoryDetails[] = [
                 'inventoryId' => $inventory['inventoryId'],
-                'storeId' => $inventory['storeId'],
-                'lastUpdate' => $inventory['lastUpdate'] ?? null
+                'storeId'     => $inventory['storeId'],
+                'lastUpdate'  => $inventory['lastUpdate'] ?? null,
             ];
         }
 
         return view('inventory.show', [
-            'film' => $filmInfo,
-            'inventories' => $inventoryDetails
+            'film'        => $filmInfo,
+            'inventories' => $inventoryDetails,
         ]);
     }
 
     /**
-     * AJAX endpoint to check availability for a single DVD
+     * Endpoint AJAX : vérifie si un DVD est disponible à la location.
+     *
+     * @return \Illuminate\Http\JsonResponse {isAvailable: bool}
      */
     public function checkDVDAvailability($id)
     {
@@ -233,51 +232,34 @@ class InventoryController extends Controller
     }
 
     /**
-     * Supprime plusieurs inventaires
+     * Supprime plusieurs DVDs en une seule requête (sélection multiple).
+     *
+     * @return \Illuminate\Http\JsonResponse Résumé {success, message}
      */
     public function deleteMultiple(\Illuminate\Http\Request $request)
     {
         $validated = $request->validate([
-            'inventoryIds' => 'required|array',
-            'inventoryIds.*' => 'required|integer'
+            'inventoryIds'   => 'required|array',
+            'inventoryIds.*' => 'required|integer',
         ]);
 
-        $inventoryIds = $validated['inventoryIds'];
         $successCount = 0;
-        $failedCount = 0;
+        $failedCount  = 0;
 
-        // Supprimer chaque inventaire un par un
-        foreach ($inventoryIds as $id) {
-            $result = $this->inventoryService->deleteInventory($id);
-            if ($result) {
-                $successCount++;
-            } else {
-                $failedCount++;
-            }
+        foreach ($validated['inventoryIds'] as $id) {
+            $this->inventoryService->deleteInventory($id) ? $successCount++ : $failedCount++;
         }
 
-        // Invalider le cache aprÃ¨s suppression
         if ($successCount > 0) {
             Cache::forget('all_inventories');
         }
 
-        // Préparer le message de retour
         if ($failedCount === 0) {
-            return response()->json([
-                'success' => true,
-                'message' => $successCount . ' DVD(s) supprimé(s) avec succÃ¨s'
-            ]);
+            return response()->json(['success' => true, 'message' => $successCount . ' DVD(s) supprimé(s) avec succès']);
         } elseif ($successCount === 0) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur lors de la suppression des DVDs'
-            ], 500);
-        } else {
-            return response()->json([
-                'success' => true,
-                'message' => $successCount . ' DVD(s) supprimé(s), ' . $failedCount . ' échec(s)'
-            ]);
+            return response()->json(['success' => false, 'message' => 'Erreur lors de la suppression des DVDs'], 500);
         }
+
+        return response()->json(['success' => true, 'message' => $successCount . ' DVD(s) supprimé(s), ' . $failedCount . ' échec(s)']);
     }
 }
-

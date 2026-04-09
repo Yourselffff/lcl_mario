@@ -1,4 +1,8 @@
-
+{{-- =============================================================================
+     Liste paginée des films (chargement AJAX).
+     La page HTML est rendue vide par le serveur ; le JavaScript (FilmsPagination)
+     appelle l'endpoint POST /films/data pour récupérer les données et remplir le tableau.
+     ============================================================================= --}}
 @extends('layouts.app')
 
 @section('content')
@@ -91,11 +95,16 @@
 </div>
 
 <script>
+    /**
+     * Objet JavaScript gérant la pagination AJAX de la liste des films.
+     * Principe : on envoie une requête POST à /films/data avec la page et la limite,
+     * le serveur retourne un JSON, et on met à jour le DOM sans rechargement de page.
+     */
     const FilmsPagination = {
         currentPage: 1,
         limit: 10,
         totalPages: 1,
-        csrfToken: '{{ csrf_token() }}',
+        csrfToken: '{{ csrf_token() }}',   // Token CSRF requis par Laravel pour les requêtes POST
         dataUrl: '{{ route("films.data") }}',
         showUrl: '{{ url("films") }}',
         editUrl: '{{ url("films") }}',
@@ -112,6 +121,7 @@
             });
         },
 
+        /** Charge une page de films via fetch (requête AJAX POST vers /films/data). */
         async loadFilms() {
             document.getElementById('loading').style.display = 'block';
             document.getElementById('filmsContainer').style.display = 'none';
@@ -151,6 +161,7 @@
             }
         },
 
+        /** Génère les lignes du tableau HTML à partir du tableau de films reçu. */
         renderFilms(films) {
             const tbody = document.getElementById('filmsTableBody');
             tbody.innerHTML = '';
@@ -193,6 +204,7 @@
             });
         },
 
+        /** Construit les boutons de pagination (précédent, numéros, suivant). */
         renderPagination(data) {
             document.getElementById('totalFilms').textContent = data.totalFilms;
             document.getElementById('currentPageInfo').textContent = data.currentPage;
@@ -242,6 +254,7 @@
             paginationList.appendChild(this.createPageItem('>>', data.totalPages, data.currentPage === data.totalPages));
         },
 
+        /** Crée un élément <li> de pagination Bootstrap. */
         createPageItem(text, page, disabled, active = false) {
             const li = document.createElement('li');
             li.className = 'page-item' + (disabled ? ' disabled' : '') + (active ? ' active' : '');
@@ -264,6 +277,7 @@
             return li;
         },
 
+        /** Échappe les caractères HTML pour éviter les injections XSS dans le tableau. */
         escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;

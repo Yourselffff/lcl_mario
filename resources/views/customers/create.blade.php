@@ -1,3 +1,4 @@
+{{-- Formulaire de création d'un client. Données envoyées via POST /customers vers CustomerController::store(). --}}
 @extends('layouts.app')
 
 @section('content')

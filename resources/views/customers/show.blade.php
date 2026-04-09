@@ -1,3 +1,4 @@
+{{-- Fiche détail d'un client. Données passées par CustomerController::show() via la variable $customer. --}}
 @extends('layouts.app')
 
 @section('content')

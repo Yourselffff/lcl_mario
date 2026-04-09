@@ -6,6 +6,10 @@ use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvid
 use Illuminate\Support\Facades\Auth;
 use App\Auth\ToadUserProvider;
 
+/**
+ * Enregistre le provider d'authentification personnalisé 'toad'.
+ * Configuré comme driver dans config/auth.php (guards.web.provider = 'toad').
+ */
 class AuthServiceProvider extends ServiceProvider
 {
     protected $policies = [
@@ -16,6 +20,7 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
+        // Déclare le driver 'toad' auprès de Laravel
         Auth::provider('toad', function ($app, array $config) {
             return new ToadUserProvider();
         });

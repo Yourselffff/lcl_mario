@@ -1,3 +1,4 @@
+{{-- Formulaire de création d'un DVD (inventaire). Accepte filmId en query string pour pré-sélectionner un film. --}}
 @extends('layouts.app')
 
 @section('content')

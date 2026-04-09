@@ -1,3 +1,6 @@
+{{-- Formulaire de modification d'un film.
+     old('champ', $film['champ']) : affiche d'abord la valeur saisie (si erreur), sinon la valeur actuelle du film.
+     @method('PUT') simule une requête HTTP PUT (les formulaires HTML ne supportent que GET/POST). --}}
 @extends('layouts.app')
 
 @section('content')
@@ -144,6 +147,8 @@
                         </div>
 
                         @php
+                            // specialFeatures est stocké en BDD comme une chaîne "Trailers,Commentaries"
+                            // → on la découpe en tableau pour pouvoir cocher les bonnes cases
                             $specialFeatures = isset($film['specialFeatures']) ? explode(',', $film['specialFeatures']) : [];
                             if (old('special_features')) {
                                 $specialFeatures = old('special_features');
@@ -200,6 +205,8 @@
                         </div>
 
                         @php
+                            // Extrait les IDs des acteurs/réalisateurs du film pour pré-sélectionner
+                            // les bonnes options dans les <select multiple>
                             $filmActorIds = [];
                             $filmDirectorIds = [];
                             if (isset($film['actors']) && is_array($film['actors'])) {

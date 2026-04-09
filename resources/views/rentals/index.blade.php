@@ -1,4 +1,9 @@
-
+{{-- =============================================================================
+     Liste paginée des locations (chargement AJAX).
+     Supporte un filtre par statut (1=en cours, 2=retourné, 3=en retard) :
+     quand un filtre est actif, toutes les locations sont chargées côté PHP
+     puis filtrées et paginées (l'API ne supporte pas le filtrage natif).
+     ============================================================================= --}}
 @extends('layouts.app')
 
 @section('content')

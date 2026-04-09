@@ -6,23 +6,33 @@ use App\Services\Traits\HasToadToken;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Service CRUD clients via l'API Toad.
+ * Endpoints : GET/POST/PUT/DELETE /customers
+ */
 class ToadCustomerService
 {
     use HasToadToken;
-    private string $baseUrl;
 
     public function __construct()
     {
-        $this->baseUrl = rtrim((string) config('services.toad.url', 'http://localhost:8180'), '/');
     }
 
+    /**
+     * Retourne une page de clients.
+     * L'API ne supporte pas la pagination native → on sliceen PHP côté serveur.
+     *
+     * @param  int        $limit  Nombre de résultats par page
+     * @param  int        $offset Index de départ
+     * @return array|null
+     */
     public function getAllCustomers(int $limit = 10, int $offset = 0): ?array
     {
-        $url = $this->baseUrl . '/customers';
+        $url = $this->getBaseUrl() . '/customers';
 
         try {
             $headers = ['Accept' => 'application/json'];
-            $token = $this->getUserToken();
+            $token   = $this->getUserToken();
             if ($token) {
                 $headers['Authorization'] = "Bearer {$token}";
             }
@@ -30,8 +40,7 @@ class ToadCustomerService
             $response = Http::withHeaders($headers)->timeout(15)->get($url);
 
             if ($response->successful()) {
-                $customers = $response->json();
-                return array_slice($customers, $offset, $limit);
+                return array_slice($response->json(), $offset, $limit);
             }
 
             Log::warning('Customers API KO', ['status' => $response->status()]);
@@ -42,13 +51,18 @@ class ToadCustomerService
         }
     }
 
+    /**
+     * Retourne le nombre total de clients (utilisé pour le calcul de la pagination).
+     *
+     * @return int 0 en cas d'erreur
+     */
     public function getCustomersCount(): int
     {
-        $url = $this->baseUrl . '/customers';
+        $url = $this->getBaseUrl() . '/customers';
 
         try {
             $headers = ['Accept' => 'application/json'];
-            $token = $this->getUserToken();
+            $token   = $this->getUserToken();
             if ($token) {
                 $headers['Authorization'] = "Bearer {$token}";
             }
@@ -66,33 +80,37 @@ class ToadCustomerService
         }
     }
 
+    /**
+     * @param  int        $id
+     * @return array|null Données du client, null si introuvable
+     */
     public function getCustomerById(int $id): ?array
     {
-        $url = $this->baseUrl . '/customers/' . $id;
+        $url = $this->getBaseUrl() . '/customers/' . $id;
 
         try {
             $headers = ['Accept' => 'application/json'];
-            $token = $this->getUserToken();
+            $token   = $this->getUserToken();
             if ($token) {
                 $headers['Authorization'] = "Bearer {$token}";
             }
 
             $response = Http::withHeaders($headers)->timeout(10)->get($url);
 
-            if ($response->successful()) {
-                return $response->json();
-            }
-
-            return null;
+            return $response->successful() ? $response->json() : null;
         } catch (\Throwable $e) {
             Log::error('Erreur API Customer', ['msg' => $e->getMessage()]);
             return null;
         }
     }
 
+    /**
+     * @param  array      $data Champs du client (storeId, firstName, lastName, email…)
+     * @return array|null Client créé avec son ID, null si échec
+     */
     public function createCustomer(array $data): ?array
     {
-        $url = $this->baseUrl . '/customers';
+        $url = $this->getBaseUrl() . '/customers';
 
         try {
             $headers = [
@@ -118,9 +136,16 @@ class ToadCustomerService
         }
     }
 
+    /**
+     * Mise à jour complète du client (PUT remplace toutes les propriétés).
+     *
+     * @param  int        $id
+     * @param  array      $data
+     * @return array|null Client mis à jour, null si échec
+     */
     public function updateCustomer(int $id, array $data): ?array
     {
-        $url = $this->baseUrl . '/customers/' . $id;
+        $url = $this->getBaseUrl() . '/customers/' . $id;
 
         try {
             $headers = [
@@ -146,24 +171,28 @@ class ToadCustomerService
         }
     }
 
+    /**
+     * @param  int  $id
+     * @return bool true si supprimé (204 inclus), false sinon
+     */
     public function deleteCustomer(int $id): bool
     {
-        $url = $this->baseUrl . '/customers/' . $id;
+        $url = $this->getBaseUrl() . '/customers/' . $id;
 
         try {
             $headers = ['Accept' => 'application/json'];
-            $token = $this->getUserToken();
+            $token   = $this->getUserToken();
             if ($token) {
                 $headers['Authorization'] = "Bearer {$token}";
             }
 
             $response = Http::withHeaders($headers)->timeout(10)->delete($url);
 
+            // 204 No Content est une réponse valide pour une suppression réussie
             return $response->successful() || $response->status() === 204;
         } catch (\Throwable $e) {
             Log::error('Erreur suppression customer', ['msg' => $e->getMessage()]);
             return false;
         }
     }
-
 }

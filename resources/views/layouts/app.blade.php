@@ -1,23 +1,31 @@
+{{-- =============================================================================
+     Layout principal de l'application.
+     Toutes les vues héritent de ce template via @extends('layouts.app').
+     Le contenu de chaque page est injecté dans @yield('content').
+     ============================================================================= --}}
 <!doctype html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- CSRF Token -->
+    {{-- Token CSRF injecté dans le meta : utilisé par les requêtes AJAX (fetch/axios) --}}
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>{{ config('app.name', 'Laravel') }}</title>
 
-    <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
 
-    <!-- Scripts -->
+    {{-- Compilation des assets CSS/JS via Vite (resources/sass/app.scss + resources/js/app.js) --}}
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
 </head>
 <body>
     <div id="app">
+
+        {{-- =====================================================================
+             Barre de navigation principale
+             ===================================================================== --}}
         <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
             <div class="container">
                 <a class="navbar-brand" href="{{ url('/') }}">
@@ -28,7 +36,8 @@
                 </button>
 
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <!-- Left Side Of Navbar -->
+
+                    {{-- Liens de navigation (visibles uniquement si connecté) --}}
                     <ul class="navbar-nav me-auto">
                         @auth
                             <li class="nav-item">
@@ -59,9 +68,44 @@
                         @endauth
                     </ul>
 
-                    <!-- Right Side Of Navbar -->
                     <ul class="navbar-nav ms-auto">
-                        <!-- Authentication Links -->
+
+                        {{-- Sélecteur de source de données (API locale / distante) --}}
+                        <li class="nav-item dropdown me-2">
+                            @php $currentSource = session('toad_source', 'local'); @endphp
+                            <a class="nav-link dropdown-toggle d-flex align-items-center gap-1" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                @if($currentSource === 'remote')
+                                    <span class="badge bg-success">API distante</span>
+                                @else
+                                    <span class="badge bg-secondary">API locale</span>
+                                @endif
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><h6 class="dropdown-header">Source de données</h6></li>
+                                <li>
+                                    {{-- Formulaire POST pour basculer vers l'API locale --}}
+                                    <form action="{{ route('data-source.switch') }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <input type="hidden" name="source" value="local">
+                                        <button type="submit" class="dropdown-item {{ $currentSource === 'local' ? 'active' : '' }}">
+                                            <i class="bi bi-hdd me-2"></i>API locale <small class="text-muted">(localhost:8180)</small>
+                                        </button>
+                                    </form>
+                                </li>
+                                <li>
+                                    {{-- Formulaire POST pour basculer vers l'API distante --}}
+                                    <form action="{{ route('data-source.switch') }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <input type="hidden" name="source" value="remote">
+                                        <button type="submit" class="dropdown-item {{ $currentSource === 'remote' ? 'active' : '' }}">
+                                            <i class="bi bi-cloud me-2"></i>API distante <small class="text-muted">(rftg.mtb111.com)</small>
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+
+                        {{-- Liens connexion / déconnexion --}}
                         @guest
                             @if (Route::has('login'))
                                 <li class="nav-item">
@@ -75,15 +119,16 @@
                                 </li>
                             @endif
                         @else
+                            {{-- Menu déroulant utilisateur connecté --}}
                             <li class="nav-item dropdown">
                                 <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
                                     {{ Auth::user()->name }}
                                 </a>
 
                                 <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                                    {{-- Déconnexion via formulaire POST (méthode sécurisée, pas un simple lien GET) --}}
                                     <a class="dropdown-item" href="{{ route('logout') }}"
-                                       onclick="event.preventDefault();
-                                                     document.getElementById('logout-form').submit();">
+                                       onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                         {{ __('Logout') }}
                                     </a>
 
@@ -98,6 +143,7 @@
             </div>
         </nav>
 
+        {{-- Zone de contenu principal : chaque vue injecte son HTML ici --}}
         <main class="py-4">
             @yield('content')
         </main>
